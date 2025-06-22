@@ -42,4 +42,4 @@ jobs:
         continue-on-error: false
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
-        run: vsce publish --no-verify -p $VSCE_PAT --logLevel debug
+        run: vsce publish --no-verify -p $VSCE_PAT
