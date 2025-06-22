@@ -39,6 +39,7 @@ jobs:
 
       - name: Publish to VSCode Marketplace
         if: env.released == 'true'
+        continue-on-error: false
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
-        run: vsce publish -p $VSCE_PAT
+        run: vsce publish --no-verify -p $VSCE_PAT --logLevel debug
