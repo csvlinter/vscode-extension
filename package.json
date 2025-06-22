@@ -3,7 +3,7 @@
   "publisher": "csvlinter",
   "displayName": "CSVLinter",
   "description": "Lint CSV files using the csvlinter Go binary",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "engines": {
     "vscode": "^1.85.0"
   },

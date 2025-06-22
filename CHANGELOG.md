@@ -1,3 +1,10 @@
+## [1.0.3](https://github.com/csvlinter/vscode-extension/compare/v1.0.2...v1.0.3) (2025-06-22)
+
+
+### Bug Fixes
+
+* update engine ([4c47646](https://github.com/csvlinter/vscode-extension/commit/4c47646c322fe02236e2569fcb5044eed8796182))
+
 ## [1.0.2](https://github.com/csvlinter/vscode-extension/compare/v1.0.1...v1.0.2) (2025-06-22)
 
 
