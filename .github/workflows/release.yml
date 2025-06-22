@@ -26,17 +26,19 @@ jobs:
         run: npm ci
 
       - name: Run semantic-release
-        id: release
+        id: semantic
+        continue-on-error: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npx semantic-release
+        run: |
+          npx semantic-release && echo "released=true" >> $GITHUB_ENV
 
       - name: Install vsce
-        if: steps.release.outputs.new_release_published == 'true'
+        if: env.released == 'true'
         run: npm install -g @vscode/vsce
 
       - name: Publish to VSCode Marketplace
-        if: steps.release.outputs.new_release_published == 'true'
+        if: env.released == 'true'
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
         run: vsce publish -p $VSCE_PAT
