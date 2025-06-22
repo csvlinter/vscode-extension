@@ -9,6 +9,8 @@ jobs:
   release:
     name: Release
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -23,8 +25,18 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Release
+      - name: Run semantic-release
+        id: release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npx semantic-release 
+        run: npx semantic-release
+
+      - name: Install vsce
+        if: steps.release.outputs.new_release_published == 'true'
+        run: npm install -g @vscode/vsce
+
+      - name: Publish to VSCode Marketplace
+        if: steps.release.outputs.new_release_published == 'true'
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        run: vsce publish -p $VSCE_PAT
