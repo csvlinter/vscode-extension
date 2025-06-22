@@ -1,11 +1,10 @@
 # CSV Linter for Visual Studio Code
 
-[![Marketplace Version](https://vsmarketplacebadge.apphb.com/version/YOUR-PUBLISHER-ID.csvlinter-vscode.svg)](https://marketplace.visualstudio.com/items?itemName=YOUR-PUBLISHER-ID.csvlinter-vscode)
-[![Installs](https://vsmarketplacebadge.apphb.com/installs/YOUR-PUBLISHER-ID.csvlinter-vscode.svg)](https://marketplace.visualstudio.com/items?itemName=YOUR-PUBLISHER-ID.csvlinter-vscode)
+[![Marketplace Version](https://vsmarketplacebadge.apphb.com/version/csvlinter.csvlinter-vscode.svg)](https://marketplace.visualstudio.com/items?itemName=csvlinter.csvlinter-vscode)
+[![Installs](https://vsmarketplacebadge.apphb.com/installs/csvlinter.csvlinter-vscode.svg)](https://marketplace.visualstudio.com/items?itemName=csvlinter.csvlinter-vscode)
 
-Lint your CSV files directly in Visual Studio Code. This extension uses the powerful Go-based [csvlinter](https://github.com/YOUR_GITHUB_USER/YOUR_GITHUB_REPO) to provide fast and efficient validation of CSV structure, content, and encoding.
+Lint your CSV files directly in Visual Studio Code. This extension uses the powerful Go-based [csvlinter](https://github.com/csvlinter/vscode-extension) to provide fast and efficient validation of CSV structure, content, and encoding.
 
-![CSV Linter in action](https://raw.githubusercontent.com/YOUR_GITHUB_USER/YOUR_GITHUB_REPO/main/brand/screenshot.png) <!-- TODO: Add a real screenshot -->
 
 ## How It Works
 
@@ -33,7 +32,7 @@ None. The extension handles everything for you.
 
 ## Known Issues
 
-There are no known issues at this time. If you find a bug, please [file an issue](https://github.com/YOUR_GITHUB_USER/YOUR_GITHUB_REPO/issues).
+There are no known issues at this time. If you find a bug, please [file an issue](https://github.com/csvlinter/vscode-issues/issues).
 
 ## Release Notes
 
