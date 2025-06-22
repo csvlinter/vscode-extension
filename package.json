@@ -5,7 +5,7 @@
   "description": "Lint CSV files using the csvlinter Go binary",
   "version": "1.0.2",
   "engines": {
-    "vscode": "^1.101.0"
+    "vscode": "^1.85.0"
   },
   "categories": [
     "Other"
