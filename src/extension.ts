@@ -1,5 +1,3 @@
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
 import * as vscode from "vscode";
 import * as path from "path";
 import * as fs from "fs";
@@ -192,7 +190,7 @@ async function lintDocument(document: vscode.TextDocument, linterPath: string) {
     // Some versions print JSON to stderr instead of stdout
     const raw = stdout.trim() || stderr.trim();
     if (!raw) {
-      vscode.window.showWarningMessage("csvlinter produced no JSON output.");
+      vscode.window.showWarningMessage("CSVLinter produced no JSON output.");
       return;
     }
 
@@ -204,7 +202,7 @@ async function lintDocument(document: vscode.TextDocument, linterPath: string) {
       json = JSON.parse(raw.slice(firstBrace, lastBrace + 1));
     } catch (e) {
       vscode.window.showErrorMessage(
-        "csvlinter output wasn’t valid JSON (see Output)."
+        "CSVLinter output wasn’t valid JSON (see Output)."
       );
       return;
     }
@@ -243,7 +241,7 @@ async function getLinterPath(
     return binaryPath;
   }
 
-  vscode.window.showInformationMessage("Downloading CSVlinter...");
+  vscode.window.showInformationMessage("Downloading CSVLinter...");
   try {
     await downloadAndExtractLinter(context);
     logger(`Linter downloaded and extracted to: ${binaryPath}`);
