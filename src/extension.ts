@@ -151,7 +151,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
       const handle = setTimeout(() => {
         if (linterPath && isCsvFile(document)) {
-          lintDocument(document, linterPath);
+          lintDocument(document, linterPath, document.getText());
         }
         pendingLintRequests.delete(key);
       }, 200);
@@ -163,32 +163,71 @@ export async function activate(context: vscode.ExtensionContext) {
   logger("CSVLinter extension is now active!!");
 }
 
-async function lintDocument(document: vscode.TextDocument, linterPath: string) {
+async function lintDocument(
+  document: vscode.TextDocument,
+  linterPath: string,
+  text?: string
+) {
+  logger(
+    "Linting document:",
+    document.uri.fsPath,
+    text ? "(using stdin)" : "(using file)"
+  );
   diagnosticCollection.delete(document.uri);
-  const proc = childProcess.spawn(linterPath, [
+  const args = [
     "validate",
     "--format",
     "json",
-    document.uri.fsPath,
-  ]);
+    ...(text
+      ? ["--filename", document.uri.fsPath, "-"]
+      : [document.uri.fsPath]),
+  ];
+  logger("Spawning linter with args:", JSON.stringify(args));
+  const proc = childProcess.spawn(linterPath, args);
+
+  if (text) {
+    logger(
+      "Sending text to stdin (first 200 chars):",
+      text.slice(0, 200) + (text.length > 200 ? "..." : "")
+    );
+    proc.stdin.write(text);
+    proc.stdin.end();
+  }
 
   let stdout = "";
   let stderr = "";
 
-  proc.stdout.on("data", (d) => (stdout += d.toString()));
-  proc.stderr.on("data", (d) => (stderr += d.toString()));
+  proc.stdout.on("data", (d) => {
+    stdout += d.toString();
+    logger(
+      "Linter stdout chunk:",
+      d.toString().slice(0, 200) + (d.length > 200 ? "..." : "")
+    );
+  });
+  proc.stderr.on("data", (d) => {
+    stderr += d.toString();
+    logger(
+      "Linter stderr chunk:",
+      d.toString().slice(0, 200) + (d.length > 200 ? "..." : "")
+    );
+  });
 
   proc.on("close", (code) => {
+    logger("Linter process exited with code:", String(code));
     // Only treat codes >1 as catastrophic
     if (code && code > 1) {
       vscode.window.showErrorMessage(
-        `csvlinter failed (exit ${code}). See “CSV-Linter” output.`
+        `csvlinter failed (exit ${code}). See "CSV-Linter" output.`
       );
       return;
     }
 
     // Some versions print JSON to stderr instead of stdout
     const raw = stdout.trim() || stderr.trim();
+    logger(
+      "Linter raw output (first 500 chars):",
+      raw.slice(0, 500) + (raw.length > 500 ? "..." : "")
+    );
     if (!raw) {
       vscode.window.showWarningMessage("CSVLinter produced no JSON output.");
       return;
@@ -202,15 +241,17 @@ async function lintDocument(document: vscode.TextDocument, linterPath: string) {
       json = JSON.parse(raw.slice(firstBrace, lastBrace + 1));
     } catch (e) {
       vscode.window.showErrorMessage(
-        "CSVLinter output wasn’t valid JSON (see Output)."
+        "CSVLinter output wasn't valid JSON (see Output)."
       );
+      logger("Failed to parse linter output as JSON:", String(e), raw);
       return;
     }
 
-    // Locate the errors array no matter how it’s wrapped
+    // Locate the errors array no matter how it's wrapped
     const errors =
       json.errors ?? json.validation?.errors ?? json.results?.errors ?? [];
 
+    logger("Diagnostics to set:", JSON.stringify(errors, null, 2));
     const diagnostics = errors.map((err: any) => {
       const lineIdx = Math.max((err.line_number ?? err.line ?? 1) - 1, 0);
       const range = new vscode.Range(lineIdx, 0, lineIdx, Number.MAX_VALUE);
