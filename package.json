@@ -14,13 +14,26 @@
     "type": "git",
     "url": "https://github.com/csvlinter/vscode-extension.git"
   },
-  "activationEvents": [],
+  "activationEvents": [
+    "onLanguage:csv"
+  ],
   "main": "./out/extension.js",
   "contributes": {
+    "languages": [
+      {
+        "id": "csv",
+        "extensions": [
+          ".csv"
+        ],
+        "aliases": [
+          "CSV"
+        ]
+      }
+    ],
     "commands": [
       {
-        "command": "csvlinter.csvlinter-vscode.helloWorld",
-        "title": "Hello World"
+        "command": "csvlinter.redownloadLinter",
+        "title": "CSV Linter: Re-download Linter"
       }
     ]
   },
