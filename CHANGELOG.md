@@ -1,3 +1,11 @@
+## [1.0.4](https://github.com/csvlinter/vscode-extension/compare/v1.0.3...v1.0.4) (2025-06-23)
+
+
+### Bug Fixes
+
+* json flag ([e586573](https://github.com/csvlinter/vscode-extension/commit/e586573fab313da261c1b25a2b386aeba7ebabe5))
+* types ([69e4d2d](https://github.com/csvlinter/vscode-extension/commit/69e4d2dfb1e0d7c1e2fa466d3b6417c9908c4a12))
+
 ## [1.0.3](https://github.com/csvlinter/vscode-extension/compare/v1.0.2...v1.0.3) (2025-06-22)
 
 
