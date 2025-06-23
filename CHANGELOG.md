@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/csvlinter/vscode-extension/compare/v1.0.4...v1.1.0) (2025-06-23)
+
+
+### Features
+
+* lint edits ([7002834](https://github.com/csvlinter/vscode-extension/commit/7002834c29913252bce07c204ef3cbcb1b4d41b4))
+
 ## [1.0.4](https://github.com/csvlinter/vscode-extension/compare/v1.0.3...v1.0.4) (2025-06-23)
 
 
