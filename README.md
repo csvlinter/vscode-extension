@@ -1,5 +1,7 @@
 # CSV Linter for Visual Studio Code
 
+> **Status: Early stage** – Actively maturing; expect quick refinements as we solidify the foundation.
+
 [![Version](https://img.shields.io/visual-studio-marketplace/v/csvlinter.csvlinter-vscode?label=VS%20Marketplace)](https://marketplace.visualstudio.com/items?itemName=csvlinter.csvlinter-vscode)
 [![Installs](https://img.shields.io/visual-studio-marketplace/i/csvlinter.csvlinter-vscode)](https://marketplace.visualstudio.com/items?itemName=csvlinter.csvlinter-vscode)
 
