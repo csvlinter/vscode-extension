@@ -7,12 +7,21 @@
   "engines": {
     "vscode": "^1.85.0"
   },
+  "icon": "./icon.png",
+  "galleryBanner": {
+    "color": "#0fce09",
+    "theme": "dark"
+  },
   "categories": [
-    "Other"
+    "Programming Languages",
+    "Linters"
   ],
   "repository": {
     "type": "git",
     "url": "https://github.com/csvlinter/vscode-extension.git"
+  },
+  "bugs": {
+    "url": "https://github.com/csvlinter/vscode-extension/issues"
   },
   "activationEvents": [
     "onLanguage:csv"
@@ -35,7 +44,18 @@
         "command": "csvlinter.redownloadLinter",
         "title": "CSV Linter: Re-download Linter"
       }
-    ]
+    ],
+    "configuration": {
+      "type": "object",
+      "title": "CSVLinter",
+      "properties": {
+        "csvlinter.debug": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable debug logging for the CSVLinter extension."
+        }
+      }
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",

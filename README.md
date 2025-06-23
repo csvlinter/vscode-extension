@@ -32,7 +32,7 @@ None. The extension handles everything for you.
 
 ## Known Issues
 
-There are no known issues at this time. If you find a bug, please [file an issue](https://github.com/csvlinter/vscode-issues/issues).
+There are no known issues at this time. If you find a bug, please [file an issue](https://github.com/csvlinter/vscode-extension/issues).
 
 ## Release Notes
 
