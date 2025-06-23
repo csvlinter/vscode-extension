@@ -12,15 +12,19 @@ Lint your CSV files directly in Visual Studio Code. This extension uses the powe
 
 On activation, this extension automatically downloads the correct `csvlinter` binary for your operating system (Windows, macOS, or Linux) from the official GitHub releases. There are no external dependencies to install or configure.
 
-The linting process is triggered whenever you open or save a `.csv` file.
+The linting process is triggered whenever you open, edit or save a `.csv` file.
 
 ## Features
 
 - **Structural Validation**: Detects common CSV errors like mismatched column counts and malformed rows.
-- **Schema Validation**: (Coming soon) Validate CSV data against a JSON Schema.
+- **Schema Validation**: Validate CSV data against a JSON Schema
 - **Encoding Validation**: Ensures files are properly UTF-8 encoded.
 - **Automatic Binary Management**: The correct linter binary is downloaded and cached automatically.
 - **Cross-Platform**: Works on Windows, macOS, and Linux.
+
+### Automatic JSON Schema Validation
+
+When you open or edit a CSV file, the extension will automatically attempt to validate it against a JSON Schema if one is found. The schema file must be named either `csvlinter.schema.json` or `<csvfilename>.schema.json` (where `<csvfilename>` matches the CSV file's name). The schema file can be located in the same directory as the CSV file or in any parent directory, recursively up to the root. The extension and the underlying linter will search for the schema in this order and use it for validation if found.
 
 ## Usage
 
