@@ -5,10 +5,9 @@
 [![Version](https://img.shields.io/visual-studio-marketplace/v/csvlinter.csvlinter-vscode?label=VS%20Marketplace)](https://marketplace.visualstudio.com/items?itemName=csvlinter.csvlinter-vscode)
 [![Installs](https://img.shields.io/visual-studio-marketplace/i/csvlinter.csvlinter-vscode)](https://marketplace.visualstudio.com/items?itemName=csvlinter.csvlinter-vscode)
 
-Lint your CSV files directly in Visual Studio Code. This extension uses the powerful Go-based [csvlinter](https://github.com/csvlinter/csvlinter) to provide fast and efficient validation of CSV structure, content, and encoding.
+Lint your CSV files directly in Visual Studio Code. This extension uses the powerful Go-based [csvlinter](https://github.com/csvlinter/csvlinter) (⚡ up to 270x faster than similar tools) to provide fast and efficient validation of CSV structure, content, and encoding.
 
-
-## How It Works
+## How it works
 
 On activation, this extension automatically downloads the correct `csvlinter` binary for your operating system (Windows, macOS, or Linux) from the official GitHub releases. There are no external dependencies to install or configure.
 
@@ -19,6 +18,7 @@ The linting process is triggered whenever you open, edit or save a `.csv` file.
 - **Structural Validation**: Detects common CSV errors like mismatched column counts and malformed rows.
 - **Schema Validation**: Validate CSV data against a JSON Schema
 - **Encoding Validation**: Ensures files are properly UTF-8 encoded.
+- **Blazing Fast**: ⚡ Up to 270x faster than similar tools, thanks to streaming validation.
 - **Automatic Binary Management**: The correct linter binary is downloaded and cached automatically.
 - **Cross-Platform**: Works on Windows, macOS, and Linux.
 
