@@ -1,11 +1,11 @@
 # CSVLinter for Visual Studio Code
 
-> **Status: Early stage** – Actively maturing. Expect quick refinements as we solidify the foundation.
-
 [![Version](https://img.shields.io/visual-studio-marketplace/v/csvlinter.csvlinter-vscode?label=VS%20Marketplace)](https://marketplace.visualstudio.com/items?itemName=csvlinter.csvlinter-vscode)
 [![Installs](https://img.shields.io/visual-studio-marketplace/i/csvlinter.csvlinter-vscode)](https://marketplace.visualstudio.com/items?itemName=csvlinter.csvlinter-vscode)
 
 Lint your CSV files directly in Visual Studio Code. This extension uses the powerful Go-based [csvlinter](https://github.com/csvlinter/csvlinter) (⚡ up to 270x faster than similar tools) to provide fast and efficient validation of CSV structure, content, and encoding.
+
+Learn more at [csvlinter.com](https://csvlinter.com)
 
 ## How it works
 
@@ -15,14 +15,14 @@ The linting process is triggered whenever you open, edit or save a `.csv` file.
 
 ## Features
 
-- **Structural Validation**: Detects common CSV errors like mismatched column counts and malformed rows.
-- **Schema Validation**: Validate CSV data against a JSON Schema
-- **Encoding Validation**: Ensures files are properly UTF-8 encoded.
-- **Blazing Fast**: ⚡ Up to 270x faster than similar tools, thanks to streaming validation.
-- **Automatic Binary Management**: The correct linter binary is downloaded and cached automatically.
-- **Cross-Platform**: Works on Windows, macOS, and Linux.
+- **Structural validation**: Detects common CSV errors like mismatched column counts and malformed rows.
+- **Schema validation**: Validate CSV data against a JSON Schema
+- **Encoding validation**: Ensures files are properly UTF-8 encoded.
+- **Blazing fast**: ⚡ Up to 270x faster than similar tools, thanks to streaming validation.
+- **Automatic binary management**: The correct linter binary is downloaded and cached automatically.
+- **Cross-platform**: Works on Windows, macOS, and Linux.
 
-### Automatic JSON Schema Validation
+### Automatic JSON schema validation
 
 When you open or edit a CSV file, the extension will automatically attempt to validate it against a JSON Schema if one is found. The schema file must be named either `csvlinter.schema.json` or `<csvfilename>.schema.json` (where `<csvfilename>` matches the CSV file's name). The schema file can be located in the same directory as the CSV file or in any parent directory, recursively up to the root. The extension and the underlying linter will search for the schema in this order and use it for validation if found.
 
@@ -36,11 +36,11 @@ When you open or edit a CSV file, the extension will automatically attempt to va
 
 None. The extension handles everything for you.
 
-## Known Issues
+## Known issues
 
 There are no known issues at this time. If you find a bug, please [file an issue](https://github.com/csvlinter/vscode-extension/issues).
 
-## Release Notes
+## Release notes
 
 See the [CHANGELOG.md](CHANGELOG.md) file for details on each release.
 
