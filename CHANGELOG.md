@@ -1,3 +1,10 @@
+## [1.1.4](https://github.com/csvlinter/vscode-extension/compare/v1.1.3...v1.1.4) (2025-08-05)
+
+
+### Bug Fixes
+
+* conditionally include extension ([fe3ef48](https://github.com/csvlinter/vscode-extension/commit/fe3ef488d2a5045d3c8e07521c1c818771176475))
+
 ## [1.1.3](https://github.com/csvlinter/vscode-extension/compare/v1.1.2...v1.1.3) (2025-08-05)
 
 
