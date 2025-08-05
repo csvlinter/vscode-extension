@@ -1,3 +1,10 @@
+## [1.1.3](https://github.com/csvlinter/vscode-extension/compare/v1.1.2...v1.1.3) (2025-08-05)
+
+
+### Bug Fixes
+
+* target platform ([75b56b0](https://github.com/csvlinter/vscode-extension/commit/75b56b03cedb3221b6adeea226418a6ac297f79a))
+
 ## [1.1.2](https://github.com/csvlinter/vscode-extension/compare/v1.1.1...v1.1.2) (2025-07-15)
 
 
