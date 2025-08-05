@@ -7,7 +7,8 @@ import * as childProcess from "child_process";
 import * as tar from "tar";
 
 const GITHUB_REPO = "csvlinter/csvlinter";
-const LINTER_BINARY_NAME = "csvlinter";
+const LINTER_BINARY_EXT = os.platform() === "win32" ? ".exe" : "";
+const LINTER_BINARY_NAME = `csvlinter${LINTER_BINARY_EXT}`;
 const LATEST_RELEASE_URL = `https://api.github.com/repos/${GITHUB_REPO}/releases/latest`;
 
 let diagnosticCollection: vscode.DiagnosticCollection;
