@@ -346,7 +346,8 @@ async function getReleaseAssetUrl(): Promise<string | null> {
     return null;
   }
 
-  const assetName = `csvlinter-${platform}-${targetArch}.tar.gz`;
+  const targetPlatform = platform === "win32" ? "windows" : platform;
+  const assetName = `csvlinter-${targetPlatform}-${targetArch}.tar.gz`;
 
   return new Promise((resolve, reject) => {
     https
