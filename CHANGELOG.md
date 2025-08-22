@@ -1,3 +1,10 @@
+## [1.1.5](https://github.com/csvlinter/vscode-extension/compare/v1.1.4...v1.1.5) (2025-08-22)
+
+
+### Bug Fixes
+
+* untitled file ([662b316](https://github.com/csvlinter/vscode-extension/commit/662b3163c311500a1b38a1c0d70a929529248f93))
+
 ## [1.1.4](https://github.com/csvlinter/vscode-extension/compare/v1.1.3...v1.1.4) (2025-08-05)
 
 
