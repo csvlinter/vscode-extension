@@ -23,6 +23,16 @@ const logger = (...args: string[]) => {
   }
 };
 
+function isOnDisk(document: vscode.TextDocument) {
+  return document.uri.scheme === "file";
+}
+
+function syntheticCsvFilename(document: vscode.TextDocument) {
+  // Keep something stable-ish for diagnostics
+  const base = path.basename(document.fileName || "untitled.csv");
+  return base.endsWith(".csv") ? base : `${base}.csv`;
+}
+
 export async function activate(context: vscode.ExtensionContext) {
   diagnosticCollection = vscode.languages.createDiagnosticCollection("csv");
   context.subscriptions.push(diagnosticCollection);
@@ -98,7 +108,12 @@ export async function activate(context: vscode.ExtensionContext) {
       logger("onDidOpenTextDocument event fired for:", document.uri.fsPath);
       if (linterPath && isCsvFile(document)) {
         logger("...linting opened file.");
-        lintDocument(document, linterPath);
+        const useStdin = !isOnDisk(document);
+        lintDocument(
+          document,
+          linterPath,
+          useStdin ? document.getText() : undefined
+        );
       } else {
         logger(
           `...skipping opened file. Linter ready: ${!!linterPath}, Is CSV: ${isCsvFile(
@@ -116,7 +131,12 @@ export async function activate(context: vscode.ExtensionContext) {
       if (editor) {
         if (linterPath && isCsvFile(editor.document)) {
           logger("...linting focused file.");
-          lintDocument(editor.document, linterPath);
+          const useStdin = !isOnDisk(editor.document);
+          lintDocument(
+            editor.document,
+            linterPath,
+            useStdin ? editor.document.getText() : undefined
+          );
         } else {
           logger(
             `...skipping focused file. Linter ready: ${!!linterPath}, Is CSV: ${isCsvFile(
@@ -169,6 +189,19 @@ async function lintDocument(
   linterPath: string,
   text?: string
 ) {
+  text = text || "";
+
+  if (!text && !isOnDisk(document)) {
+    text = document.getText();
+  }
+
+  diagnosticCollection.delete(document.uri);
+
+  const useStdin = typeof text === "string";
+  const filenameForDiag = useStdin
+    ? syntheticCsvFilename(document)
+    : document.uri.fsPath;
+
   logger(
     "Linting document:",
     document.uri.fsPath,
@@ -179,19 +212,17 @@ async function lintDocument(
     "validate",
     "--format",
     "json",
-    ...(text
-      ? ["--filename", document.uri.fsPath, "-"]
-      : [document.uri.fsPath]),
+    ...(useStdin ? ["--filename", filenameForDiag, "-"] : [filenameForDiag]),
   ];
   logger("Spawning linter with args:", JSON.stringify(args));
-  const proc = childProcess.spawn(linterPath, args);
+  const proc = childProcess.spawn(linterPath, args, { stdio: "pipe" });
 
-  if (text) {
+  if (useStdin) {
     logger(
       "Sending text to stdin (first 200 chars):",
       text.slice(0, 200) + (text.length > 200 ? "..." : "")
     );
-    proc.stdin.write(text);
+    proc.stdin.write(text!);
     proc.stdin.end();
   }
 
