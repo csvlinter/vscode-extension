@@ -3,6 +3,15 @@
 [![Version](https://img.shields.io/visual-studio-marketplace/v/csvlinter.csvlinter-vscode?label=VS%20Marketplace)](https://marketplace.visualstudio.com/items?itemName=csvlinter.csvlinter-vscode)
 [![Installs](https://img.shields.io/visual-studio-marketplace/i/csvlinter.csvlinter-vscode)](https://marketplace.visualstudio.com/items?itemName=csvlinter.csvlinter-vscode)
 
+![Wrong column count](./docs/screenshots/wrong-col-count.png)
+_Figure 1: Wrong column count_
+
+![Bad quotes](./docs/screenshots/bad-quotes.png)
+_Figure 2: Bad quotes_
+
+![Using JSON Schema](./docs/screenshots/schema.png)
+_Figure 3: Using JSON Schema_
+
 Lint your CSV files directly in Visual Studio Code. This extension uses the powerful Go-based [csvlinter](https://github.com/csvlinter/csvlinter) (⚡ up to 270x faster than similar tools) to provide fast and efficient validation of CSV structure, content, and encoding.
 
 Learn more at [csvlinter.com](https://csvlinter.com)
