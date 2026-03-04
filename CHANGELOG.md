@@ -1,3 +1,10 @@
+## [1.1.6](https://github.com/csvlinter/vscode-extension/compare/v1.1.5...v1.1.6) (2026-03-04)
+
+
+### Bug Fixes
+
+* avoid toast ([03a177c](https://github.com/csvlinter/vscode-extension/commit/03a177c76f732bd0b7b6325e8a9c9a924116b12d))
+
 ## [1.1.5](https://github.com/csvlinter/vscode-extension/compare/v1.1.4...v1.1.5) (2025-08-22)
 
 
