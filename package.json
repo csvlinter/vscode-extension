@@ -2,8 +2,22 @@
   "name": "csvlinter-vscode",
   "publisher": "csvlinter",
   "displayName": "CSVLinter",
-  "description": "Lint CSV files using the csvlinter Go binary",
+  "description": "Validate CSV structure, encoding, and JSON Schema. Fast, zero-config linter powered by the csvlinter Go binary.",
+  "keywords": [
+    "csv",
+    "validate",
+    "validation",
+    "schema",
+    "json schema",
+    "lint",
+    "linter",
+    "tsv",
+    "delimiter",
+    "encoding",
+    "utf-8"
+  ],
   "version": "1.1.6",
+
   "engines": {
     "vscode": "^1.85.0"
   },
