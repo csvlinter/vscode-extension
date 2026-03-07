@@ -16,6 +16,14 @@ Lint your CSV files directly in Visual Studio Code. This extension uses the powe
 
 Learn more at [csvlinter.com](https://csvlinter.com)
 
+## Why CSVLinter?
+
+- **JSON Schema validation** — validate column values, types, and required fields against a schema, not just structure.
+- **Blazing fast** — up to 270x faster than similar tools thanks to a streaming Go binary with no Node.js overhead.
+- **Strict checks** — catches encoding issues, malformed rows, and mismatched column counts that other editors silently ignore.
+- **Zero config** — install and open a `.csv` file; everything works out of the box.
+- **Works well with [Rainbow CSV](https://marketplace.visualstudio.com/items?itemName=mechatroner.rainbow-csv)** — use Rainbow CSV for column highlighting and querying, CSVLinter for validation.
+
 ## How it works
 
 On activation, this extension automatically downloads the correct `csvlinter` binary for your operating system (Windows, macOS, or Linux) from the official GitHub releases. There are no external dependencies to install or configure.
