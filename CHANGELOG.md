@@ -1,3 +1,10 @@
+# [1.2.0](https://github.com/csvlinter/vscode-extension/compare/v1.1.6...v1.2.0) (2026-03-10)
+
+
+### Features
+
+* infer schema ([0f7868f](https://github.com/csvlinter/vscode-extension/commit/0f7868fca7ae84040a0febc87fd5b7282efb2950))
+
 ## [1.1.6](https://github.com/csvlinter/vscode-extension/compare/v1.1.5...v1.1.6) (2026-03-04)
 
 
