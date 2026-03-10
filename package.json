@@ -67,6 +67,11 @@
           "type": "boolean",
           "default": false,
           "description": "Enable debug logging for the CSVLinter extension."
+        },
+        "csvlinter.inferSchema": {
+          "type": "boolean",
+          "default": false,
+          "description": "Infer column types from the data and validate each cell against the inferred schema."
         }
       }
     }

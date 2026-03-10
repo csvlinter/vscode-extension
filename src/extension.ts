@@ -189,40 +189,48 @@ async function lintDocument(
   linterPath: string,
   text?: string,
 ) {
-  text = text || "";
+  const filePath = document.uri.fsPath || "";
 
-  if (!text && !isOnDisk(document)) {
+  // Use file path when the document is on disk AND no in-memory text override
+  // was provided (initial lint, save, focus). This lets the binary seek for
+  // --infer-schema. When the caller passes text (e.g. unsaved edits from
+  // onDidChangeTextDocument) or the doc is not on disk, fall back to stdin.
+  const useStdin = !isOnDisk(document) || text !== undefined;
+
+  if (useStdin && text === undefined) {
     text = document.getText();
   }
 
-  diagnosticCollection.delete(document.uri);
-
-  const useStdin = typeof text === "string";
   const filenameForDiag = useStdin
     ? syntheticCsvFilename(document)
-    : document.uri.fsPath;
+    : filePath;
+
+  diagnosticCollection.delete(document.uri);
 
   logger(
     "Linting document:",
     document.uri.fsPath,
-    text ? "(using stdin)" : "(using file)",
+    useStdin ? "(using stdin)" : "(using file)",
   );
   diagnosticCollection.delete(document.uri);
+  const inferSchema = vscode.workspace.getConfiguration("csvlinter").get<boolean>("inferSchema", false);
   const args = [
     "validate",
     "--format",
     "json",
-    ...(useStdin ? ["--filename", filenameForDiag, "-"] : [filenameForDiag]),
+    ...(inferSchema ? ["--infer-schema"] : []),
+    ...(useStdin ? ["--filename", filenameForDiag, "-"] : [filePath]),
   ];
   logger("Spawning linter with args:", JSON.stringify(args));
   const proc = childProcess.spawn(linterPath, args, { stdio: "pipe" });
 
   if (useStdin) {
+    const content = text ?? "";
     logger(
       "Sending text to stdin (first 200 chars):",
-      text.slice(0, 200) + (text.length > 200 ? "..." : ""),
+      content.slice(0, 200) + (content.length > 200 ? "..." : ""),
     );
-    proc.stdin.write(text!);
+    proc.stdin.write(content);
     proc.stdin.end();
   }
 
