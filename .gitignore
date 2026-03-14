@@ -5,3 +5,7 @@ node_modules
 *.vsix
 .DS_Store
 .idea/
+
+# E2E tests create/overwrite these files
+src/e2e/fixtures/invalid_editable.csv
+src/e2e/fixtures/valid_save_test.csv

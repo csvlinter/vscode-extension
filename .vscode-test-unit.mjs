@@ -5,9 +5,8 @@ import { defineConfig } from '@vscode/test-cli';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
-  files: 'out/**/*.test.js',
-  workspaceFolder: path.join(__dirname, 'src/e2e/fixtures'),
+  files: 'out/utils.test.js',
   mocha: {
-    timeout: 60_000,
+    timeout: 5_000,
   },
 });

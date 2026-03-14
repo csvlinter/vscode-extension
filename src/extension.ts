@@ -1,70 +1,66 @@
-import * as vscode from "vscode";
-import * as path from "path";
-import * as fs from "fs";
-import * as os from "os";
-import * as https from "https";
-import * as childProcess from "child_process";
-import * as tar from "tar";
+import * as vscode from 'vscode';
+import * as path from 'path';
+import * as fs from 'fs';
+import * as os from 'os';
+import * as childProcess from 'child_process';
+import * as tar from 'tar';
+import {
+  isCsvFile,
+  isOnDisk,
+  syntheticCsvFilename,
+  getReleaseAssetName,
+  getReleaseAssetUrl,
+  getLinterBinaryName,
+  getLinterPath,
+  downloadFile,
+  fileExists,
+  shouldUseStdin,
+  buildLintArgs,
+  handleLinterClose,
+  truncateForLog,
+} from './utils';
 
-const GITHUB_REPO = "csvlinter/csvlinter";
-const LINTER_BINARY_EXT = os.platform() === "win32" ? ".exe" : "";
-const LINTER_BINARY_NAME = `csvlinter${LINTER_BINARY_EXT}`;
+const GITHUB_REPO = 'csvlinter/csvlinter';
+const LINTER_BINARY_NAME = getLinterBinaryName(os.platform());
 const LATEST_RELEASE_URL = `https://api.github.com/repos/${GITHUB_REPO}/releases/latest`;
 
 let diagnosticCollection: vscode.DiagnosticCollection;
 let linterPath: string | null;
 const pendingLintRequests: Map<string, NodeJS.Timeout> = new Map();
 
-const outputChannel = vscode.window.createOutputChannel("CSVLinter");
+const outputChannel = vscode.window.createOutputChannel('CSVLinter');
 
 const logger = (...args: string[]) => {
-  if (vscode.workspace.getConfiguration("csvlinter").get("debug", false)) {
-    outputChannel.appendLine(["[CSVLinter]", ...args].join(" "));
+  if (vscode.workspace.getConfiguration('csvlinter').get('debug', false)) {
+    outputChannel.appendLine(['[CSVLinter]', ...args].join(' '));
   }
 };
 
-function isOnDisk(document: vscode.TextDocument) {
-  return document.uri.scheme === "file";
-}
-
-function syntheticCsvFilename(document: vscode.TextDocument) {
-  // Keep something stable-ish for diagnostics
-  const base = path.basename(document.fileName || "untitled.csv");
-  return base.endsWith(".csv") ? base : `${base}.csv`;
-}
-
 export async function activate(context: vscode.ExtensionContext) {
-  diagnosticCollection = vscode.languages.createDiagnosticCollection("csv");
+  diagnosticCollection = vscode.languages.createDiagnosticCollection('csv');
   context.subscriptions.push(diagnosticCollection);
   context.subscriptions.push(outputChannel);
-  linterPath = await getLinterPath(context);
+  linterPath = await resolveLinterPath(context);
 
   if (!linterPath) {
     vscode.window.showErrorMessage(
-      "CSVLinter binary not found. Please run the 'Re-download Linter' command.",
+      "CSVLinter binary not found. Please run the 'Re-download Linter' command."
     );
   }
 
   const redownloadCommand = vscode.commands.registerCommand(
-    "csvlinter.redownloadLinter",
+    'csvlinter.redownloadLinter',
     async () => {
-      vscode.window.showInformationMessage(
-        "Forcing re-download of the CSVLinter binary...",
-      );
-      const binaryPath = path.join(
-        context.globalStorageUri.fsPath,
-        LINTER_BINARY_NAME,
-      );
+      vscode.window.showInformationMessage('Forcing re-download of the CSVLinter binary...');
+      const binaryPath = path.join(context.globalStorageUri.fsPath, LINTER_BINARY_NAME);
       try {
         if (await fileExists(binaryPath)) {
           await fs.promises.unlink(binaryPath);
         }
-        linterPath = await getLinterPath(context);
+        linterPath = await resolveLinterPath(context);
 
         if (linterPath) {
-          vscode.window.showInformationMessage(
-            "CSVLinter has been successfully downloaded.",
-          );
+          vscode.window.showInformationMessage('CSVLinter has been successfully downloaded.');
           // Immediately try to lint the active file after a successful re-download.
           if (
             vscode.window.activeTextEditor &&
@@ -73,91 +69,75 @@ export async function activate(context: vscode.ExtensionContext) {
             lintDocument(vscode.window.activeTextEditor.document, linterPath);
           }
         } else {
-          vscode.window.showErrorMessage("Failed to re-download CSVLinter.");
+          vscode.window.showErrorMessage('Failed to re-download CSVLinter.');
         }
       } catch (err) {
-        vscode.window.showErrorMessage(
-          `Failed to re-download CSVLinter: ${err}`,
-        );
+        vscode.window.showErrorMessage(`Failed to re-download CSVLinter: ${err}`);
       }
-    },
+    }
   );
   context.subscriptions.push(redownloadCommand);
 
-  // If the linter is ready, immediately lint the active document if it's a CSV.
-  logger("Checking active editor on activation...");
+  logger('Checking active editor on activation...');
   const activeEditor = vscode.window.activeTextEditor;
   if (activeEditor) {
     if (linterPath && isCsvFile(activeEditor.document)) {
-      logger("...linting initially active file.");
+      logger('...linting initially active file.');
       lintDocument(activeEditor.document, linterPath);
     } else {
       logger(
-        `...skipping initially active file. Linter ready: ${!!linterPath}, Is CSV: ${isCsvFile(
-          activeEditor.document,
-        )}, LangID: ${activeEditor.document.languageId}`,
+        `...skipping initially active file. Linter ready: ${!!linterPath}, Is CSV: ${isCsvFile(activeEditor.document)}, LangID: ${activeEditor.document.languageId}`
       );
     }
   } else {
-    logger("...no initially active editor.");
+    logger('...no initially active editor.');
   }
 
-  // Lint when a new file is opened
   context.subscriptions.push(
     vscode.workspace.onDidOpenTextDocument(async (document) => {
-      logger("onDidOpenTextDocument event fired for:", document.uri.fsPath);
+      logger('onDidOpenTextDocument event fired for:', document.uri.fsPath);
       if (linterPath && isCsvFile(document)) {
-        logger("...linting opened file.");
-        const useStdin = !isOnDisk(document);
-        lintDocument(
-          document,
-          linterPath,
-          useStdin ? document.getText() : undefined,
-        );
+        logger('...linting opened file.');
+        const useStdin = !isOnDisk(document.uri.scheme);
+        lintDocument(document, linterPath, useStdin ? document.getText() : undefined);
       } else {
         logger(
-          `...skipping opened file. Linter ready: ${!!linterPath}, Is CSV: ${isCsvFile(
-            document,
-          )}, LangID: ${document.languageId}`,
+          `...skipping opened file. Linter ready: ${!!linterPath}, Is CSV: ${isCsvFile(document)}, LangID: ${document.languageId}`
         );
       }
-    }),
+    })
   );
 
-  // Lint when an existing file is focused
   context.subscriptions.push(
     vscode.window.onDidChangeActiveTextEditor(async (editor) => {
-      logger("onDidChangeActiveTextEditor event fired.");
+      logger('onDidChangeActiveTextEditor event fired.');
       if (editor) {
         if (linterPath && isCsvFile(editor.document)) {
-          logger("...linting focused file.");
-          const useStdin = !isOnDisk(editor.document);
+          logger('...linting focused file.');
+          const useStdin = !isOnDisk(editor.document.uri.scheme);
           lintDocument(
             editor.document,
             linterPath,
-            useStdin ? editor.document.getText() : undefined,
+            useStdin ? editor.document.getText() : undefined
           );
         } else {
           logger(
-            `...skipping focused file. Linter ready: ${!!linterPath}, Is CSV: ${isCsvFile(
-              editor.document,
-            )}, LangID: ${editor.document.languageId}`,
+            `...skipping focused file. Linter ready: ${!!linterPath}, Is CSV: ${isCsvFile(editor.document)}, LangID: ${editor.document.languageId}`
           );
         }
       } else {
-        logger("...editor is undefined.");
+        logger('...editor is undefined.');
       }
-    }),
+    })
   );
 
-  // Lint on future file saves
   context.subscriptions.push(
     vscode.workspace.onDidSaveTextDocument(async (document) => {
       if (linterPath && isCsvFile(document)) {
-        logger("...linting on save.");
+        logger('...linting on save.');
         await lintDocument(document, linterPath);
       }
-    }),
+    })
   );
 
   context.subscriptions.push(
@@ -165,7 +145,6 @@ export async function activate(context: vscode.ExtensionContext) {
       const document = event.document;
       const key = document.uri.toString();
 
-      // debounce
       if (pendingLintRequests.has(key)) {
         clearTimeout(pendingLintRequests.get(key)!);
       }
@@ -178,182 +157,114 @@ export async function activate(context: vscode.ExtensionContext) {
       }, 200);
 
       pendingLintRequests.set(key, handle);
-    }),
+    })
   );
 
-  logger("CSVLinter extension is now active!!");
+  logger('CSVLinter extension is now active!!');
 }
 
-async function lintDocument(
-  document: vscode.TextDocument,
-  linterPath: string,
-  text?: string,
-) {
-  const filePath = document.uri.fsPath || "";
-
-  // Use file path when the document is on disk AND no in-memory text override
-  // was provided (initial lint, save, focus). This lets the binary seek for
-  // --infer-schema. When the caller passes text (e.g. unsaved edits from
-  // onDidChangeTextDocument) or the doc is not on disk, fall back to stdin.
-  const useStdin = !isOnDisk(document) || text !== undefined;
-
-  if (useStdin && text === undefined) {
-    text = document.getText();
-  }
-
+async function lintDocument(document: vscode.TextDocument, linterPath: string, text?: string) {
+  const filePath = document.uri.fsPath || '';
+  const useStdin = shouldUseStdin(isOnDisk(document.uri.scheme), text);
+  const content = useStdin ? (text ?? document.getText()) : undefined;
   const filenameForDiag = useStdin
-    ? syntheticCsvFilename(document)
+    ? syntheticCsvFilename(path.basename(document.fileName || 'untitled.csv'))
     : filePath;
+  const inferSchema = vscode.workspace
+    .getConfiguration('csvlinter')
+    .get<boolean>('inferSchema', false);
 
   diagnosticCollection.delete(document.uri);
+  logger('Linting document:', document.uri.fsPath, useStdin ? '(using stdin)' : '(using file)');
 
-  logger(
-    "Linting document:",
-    document.uri.fsPath,
-    useStdin ? "(using stdin)" : "(using file)",
-  );
-  diagnosticCollection.delete(document.uri);
-  const inferSchema = vscode.workspace.getConfiguration("csvlinter").get<boolean>("inferSchema", false);
-  const args = [
-    "validate",
-    "--format",
-    "json",
-    ...(inferSchema ? ["--infer-schema"] : []),
-    ...(useStdin ? ["--filename", filenameForDiag, "-"] : [filePath]),
-  ];
-  logger("Spawning linter with args:", JSON.stringify(args));
-  const proc = childProcess.spawn(linterPath, args, { stdio: "pipe" });
+  const args = buildLintArgs({
+    useStdin,
+    filePath,
+    filenameForDiag,
+    inferSchema,
+  });
+  logger('Spawning linter with args:', JSON.stringify(args));
+  const proc = childProcess.spawn(linterPath, args, { stdio: 'pipe' });
 
   if (useStdin) {
-    const content = text ?? "";
-    logger(
-      "Sending text to stdin (first 200 chars):",
-      content.slice(0, 200) + (content.length > 200 ? "..." : ""),
-    );
-    proc.stdin.write(content);
+    const out = content ?? '';
+    logger('Sending text to stdin (first 200 chars):', truncateForLog(out, 200));
+    proc.stdin.write(out);
     proc.stdin.end();
   }
 
-  let stdout = "";
-  let stderr = "";
-
-  proc.stdout.on("data", (d) => {
+  let stdout = '';
+  let stderr = '';
+  proc.stdout.on('data', (d) => {
     stdout += d.toString();
-    logger(
-      "Linter stdout chunk:",
-      d.toString().slice(0, 200) + (d.length > 200 ? "..." : ""),
-    );
+    logger('Linter stdout chunk:', truncateForLog(d.toString(), 200));
   });
-  proc.stderr.on("data", (d) => {
+  proc.stderr.on('data', (d) => {
     stderr += d.toString();
-    logger(
-      "Linter stderr chunk:",
-      d.toString().slice(0, 200) + (d.length > 200 ? "..." : ""),
-    );
+    logger('Linter stderr chunk:', truncateForLog(d.toString(), 200));
   });
 
-  proc.on("close", (code) => {
-    logger("Linter process exited with code:", String(code));
-    // Only treat codes >1 as catastrophic
-    if (code && code > 1) {
-      vscode.window.showErrorMessage(
-        `csvlinter failed (exit ${code}). See "CSV-Linter" output.`,
-      );
-      return;
-    }
-
-    // Some versions print JSON to stderr instead of stdout
+  proc.on('close', (code) => {
+    logger('Linter process exited with code:', String(code));
     const raw = stdout.trim() || stderr.trim();
-    logger(
-      "Linter raw output (first 500 chars):",
-      raw.slice(0, 500) + (raw.length > 500 ? "..." : ""),
-    );
+    logger('Linter raw output (first 500 chars):', truncateForLog(raw, 500));
 
-    // No output at all — nothing to diagnose (e.g. empty file before first save)
-    if (!raw) {
-      diagnosticCollection.set(document.uri, []);
-      return;
-    }
-
-    let json: any;
-    try {
-      // If the linter ever adds banner text, grab the first {...} block
-      const firstBrace = raw.indexOf("{");
-      const lastBrace = raw.lastIndexOf("}");
-      if (firstBrace === -1 || lastBrace === -1) {
-        throw new SyntaxError("No JSON object found in output");
-      }
-      json = JSON.parse(raw.slice(firstBrace, lastBrace + 1));
-    } catch (e) {
-      logger("Failed to parse linter output as JSON:", String(e), raw);
-
-      // Plain-text error from the linter (e.g. "empty input: no headers found").
-      // Surface it as a single diagnostic on line 1 instead of a noisy toast.
-      const errorText = stderr.trim() || raw;
-      const range = new vscode.Range(0, 0, 0, Number.MAX_VALUE);
-      const diag = new vscode.Diagnostic(
-        range,
-        errorText,
-        vscode.DiagnosticSeverity.Error,
-      );
-      diagnosticCollection.set(document.uri, [diag]);
-      return;
-    }
-
-    // Locate the errors array no matter how it's wrapped
-    const errors =
-      json.errors ?? json.validation?.errors ?? json.results?.errors ?? [];
-
-    logger("Diagnostics to set:", JSON.stringify(errors, null, 2));
-    const diagnostics = errors.map((err: any) => {
-      const lineIdx = Math.max((err.line_number ?? err.line ?? 1) - 1, 0);
-      const range = new vscode.Range(lineIdx, 0, lineIdx, Number.MAX_VALUE);
-      const msg = err.message ?? err.description ?? JSON.stringify(err);
-      return new vscode.Diagnostic(range, msg, vscode.DiagnosticSeverity.Error);
+    handleLinterClose(code, stdout, stderr, {
+      onFatal: (c) =>
+        vscode.window.showErrorMessage(`csvlinter failed (exit ${c}). See "CSV-Linter" output.`),
+      onEmpty: () => diagnosticCollection.set(document.uri, []),
+      onParseError: (message) => {
+        const range = new vscode.Range(0, 0, 0, Number.MAX_VALUE);
+        const diag = new vscode.Diagnostic(range, message, vscode.DiagnosticSeverity.Error);
+        diagnosticCollection.set(document.uri, [diag]);
+      },
+      onDiagnostics: (errors) => {
+        logger('Diagnostics to set:', JSON.stringify(errors, null, 2));
+        const diagnostics = errors.map(
+          (err) =>
+            new vscode.Diagnostic(
+              new vscode.Range(err.line, 0, err.line, Number.MAX_VALUE),
+              err.message,
+              vscode.DiagnosticSeverity.Error
+            )
+        );
+        diagnosticCollection.set(document.uri, diagnostics);
+      },
     });
-
-    diagnosticCollection.set(document.uri, diagnostics);
   });
 }
 
-function isCsvFile(document: vscode.TextDocument): boolean {
-  return (
-    document.languageId === "csv" || path.extname(document.fileName) === ".csv"
-  );
-}
-
-async function getLinterPath(
-  context: vscode.ExtensionContext,
-): Promise<string | null> {
-  const binaryPath = path.join(
-    context.globalStorageUri.fsPath,
-    LINTER_BINARY_NAME,
-  );
-
-  if (await fileExists(binaryPath)) {
-    logger(`Linter already exists at: ${binaryPath}`);
-    return binaryPath;
-  }
-
-  vscode.window.showInformationMessage("Downloading CSVLinter...");
-  try {
-    await downloadAndExtractLinter(context);
-    logger(`Linter downloaded and extracted to: ${binaryPath}`);
-    if (os.platform() !== "win32") {
-      await fs.promises.chmod(binaryPath, 0o755); // Make executable
-    }
-    return binaryPath;
-  } catch (err) {
+async function resolveLinterPath(context: vscode.ExtensionContext): Promise<string | null> {
+  const storageDir = context.globalStorageUri.fsPath;
+  return getLinterPath({
+    storageDir,
+    binaryName: LINTER_BINARY_NAME,
+    fileExists,
+    onFoundExisting: (p) => logger(`Linter already exists at: ${p}`),
+    ensureDownloaded: async (binaryPath) => {
+      vscode.window.showInformationMessage('Downloading CSVLinter...');
+      await downloadAndExtractLinter(context);
+      logger(`Linter downloaded and extracted to: ${binaryPath}`);
+      if (os.platform() !== 'win32') {
+        await fs.promises.chmod(binaryPath, 0o755);
+      }
+    },
+  }).catch((err) => {
     console.error(err);
     vscode.window.showErrorMessage(`Failed to download linter: ${err}`);
     return null;
-  }
+  });
 }
 
 async function downloadAndExtractLinter(context: vscode.ExtensionContext) {
-  const assetUrl = await getReleaseAssetUrl();
+  const assetName = getReleaseAssetName(os.platform(), os.arch());
+  if (!assetName) {
+    vscode.window.showErrorMessage(`Unsupported architecture: ${os.arch()}`);
+    throw new Error('Unsupported architecture');
+  }
+  const assetUrl = await getReleaseAssetUrl(LATEST_RELEASE_URL, assetName);
   if (!assetUrl) {
-    throw new Error("Could not find a compatible release asset.");
+    throw new Error('Could not find a compatible release asset.');
   }
 
   const storagePath = context.globalStorageUri.fsPath;
@@ -361,10 +272,10 @@ async function downloadAndExtractLinter(context: vscode.ExtensionContext) {
     await fs.promises.mkdir(storagePath, { recursive: true });
   }
 
-  const downloadPath = path.join(storagePath, "linter.tar.gz");
+  const downloadPath = path.join(storagePath, 'linter.tar.gz');
   await downloadFile(assetUrl, downloadPath);
 
-  const binaryDir = path.join(storagePath, "bin");
+  const binaryDir = path.join(storagePath, 'bin');
   if (!(await fileExists(binaryDir))) {
     await fs.promises.mkdir(binaryDir, { recursive: true });
   }
@@ -375,144 +286,10 @@ async function downloadAndExtractLinter(context: vscode.ExtensionContext) {
   });
 
   const extractedBinaryPath = path.join(storagePath, LINTER_BINARY_NAME);
-  const finalBinaryPath = path.join(
-    context.globalStorageUri.fsPath,
-    LINTER_BINARY_NAME,
-  );
+  const finalBinaryPath = path.join(context.globalStorageUri.fsPath, LINTER_BINARY_NAME);
   await fs.promises.rename(extractedBinaryPath, finalBinaryPath);
 
   await fs.promises.unlink(downloadPath);
-}
-
-async function getReleaseAssetUrl(): Promise<string | null> {
-  const platform = os.platform();
-  const arch = os.arch();
-  let targetArch: string;
-
-  // Map Node.js arch to Go arch
-  if (arch === "x64") {
-    targetArch = "amd64";
-  } else if (arch === "arm64") {
-    targetArch = "arm64";
-  } else {
-    vscode.window.showErrorMessage(`Unsupported architecture: ${arch}`);
-    return null;
-  }
-
-  const targetPlatform = platform === "win32" ? "windows" : platform;
-  const assetName = `csvlinter-${targetPlatform}-${targetArch}.tar.gz`;
-
-  return new Promise((resolve, reject) => {
-    https
-      .get(
-        LATEST_RELEASE_URL,
-        { headers: { "User-Agent": "vscode-csvlinter-extension" } },
-        (res) => {
-          if (res.statusCode === 302 || res.statusCode === 301) {
-            if (res.headers.location) {
-              https
-                .get(
-                  res.headers.location,
-                  { headers: { "User-Agent": "vscode-csvlinter-extension" } },
-                  (res2) => {
-                    let data = "";
-                    res2.on("data", (chunk) => (data += chunk));
-                    res2.on("end", () =>
-                      handleReleaseApiResponse(
-                        data,
-                        assetName,
-                        resolve,
-                        reject,
-                      ),
-                    );
-                  },
-                )
-                .on("error", (err) =>
-                  reject(`Failed to fetch releases (redirect): ${err.message}`),
-                );
-            } else {
-              reject("Redirect without location for release API");
-            }
-            return;
-          }
-
-          let data = "";
-          res.on("data", (chunk) => (data += chunk));
-          res.on("end", () =>
-            handleReleaseApiResponse(data, assetName, resolve, reject),
-          );
-        },
-      )
-      .on("error", (err) => reject(`Failed to fetch releases: ${err.message}`));
-  });
-}
-
-function handleReleaseApiResponse(
-  data: string,
-  assetName: string,
-  resolve: (url: string | null) => void,
-  reject: (reason?: any) => void,
-) {
-  try {
-    const releaseInfo = JSON.parse(data);
-    const asset = releaseInfo.assets.find((a: any) => a.name === assetName);
-    if (asset) {
-      resolve(asset.browser_download_url);
-    } else {
-      reject(`Could not find asset: ${assetName}`);
-    }
-  } catch (e) {
-    reject(`Failed to parse release API response: ${data}`);
-  }
-}
-
-function downloadFile(url: string, dest: string): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const file = fs.createWriteStream(dest);
-    https
-      .get(
-        url,
-        {
-          headers: {
-            "User-Agent": "vscode-csvlinter-extension",
-            Accept: "application/octet-stream",
-          },
-        },
-        (response) => {
-          if (response.statusCode === 302 || response.statusCode === 301) {
-            if (response.headers.location) {
-              downloadFile(response.headers.location, dest)
-                .then(resolve)
-                .catch(reject);
-            } else {
-              reject(new Error("Redirect with no location header"));
-            }
-            return;
-          }
-          if (response.statusCode !== 200) {
-            reject(
-              new Error(
-                `Download failed with status code ${response.statusCode}`,
-              ),
-            );
-            return;
-          }
-          response.pipe(file);
-          file.on("finish", () => file.close(() => resolve()));
-        },
-      )
-      .on("error", (err) => {
-        fs.unlink(dest, () => {});
-        reject(err.message);
-      });
-  });
-}
-
-function fileExists(filepath: string): Promise<boolean> {
-  return fs.promises
-    .access(path.resolve(filepath), fs.constants.F_OK)
-    .then(() => true)
-    .catch(() => false);
 }
 
 export function deactivate() {}
